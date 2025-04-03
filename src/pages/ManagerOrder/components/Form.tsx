@@ -33,7 +33,7 @@ const isIOrder = (obj: any): obj is IOrder => {
 const OrderForm = (props: { record?: IOrder; onCancel?: () => void; visible?: boolean }) => {
   const { record, onCancel, visible = true } = props;
   const [form] = AntForm.useForm<FormValues>();
-  const { danhSach, setDanhSach, setVisibleForm, formSubmiting, setFormSubmiting, edit } = useModel('managerorder.managerorder');
+  const { danhSach, setDanhSach, setVisibleForm, formSubmiting, setFormSubmiting, edit, updateOrder, addOrder } = useModel('managerorder.managerorder');
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   
@@ -165,6 +165,7 @@ const OrderForm = (props: { record?: IOrder; onCancel?: () => void; visible?: bo
         const updatedOrder: IOrder = {
           ...record,  // Giữ lại tất cả thông tin cũ
           orderCode: values.orderCode,
+          customerId: values.customerId,
           customerName: customer?.name || record.customerName, // Giữ lại tên khách hàng cũ nếu không tìm thấy khách hàng mới
           orderDate: values.orderDate.toISOString(),
           status: values.status,
@@ -172,11 +173,8 @@ const OrderForm = (props: { record?: IOrder; onCancel?: () => void; visible?: bo
           items: orderItems // Cập nhật các mục sản phẩm
         };
         
-        // Cập nhật danh sách đơn hàng
-        const updatedList = danhSach.map(item => 
-          item._id === record._id ? updatedOrder : item
-        );
-        setDanhSach(updatedList);
+        // Sử dụng hàm updateOrder từ model
+        updateOrder(updatedOrder);
       } else {
         // Thêm đơn hàng mới
         const newOrder: IOrder = {
@@ -190,7 +188,8 @@ const OrderForm = (props: { record?: IOrder; onCancel?: () => void; visible?: bo
           items: orderItems // Thêm các mục sản phẩm
         };
         
-        setDanhSach([newOrder, ...danhSach]);
+        // Sử dụng hàm addOrder từ model
+        addOrder(newOrder);
       }
       
       setVisibleForm(false);

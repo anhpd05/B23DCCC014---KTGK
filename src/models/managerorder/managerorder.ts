@@ -1,30 +1,41 @@
-import { useState } from 'react';
-import { fakeOrders, type IOrder } from '@/pages/ManagerOrder/data';
+import { useState, useCallback, useEffect } from 'react';
+import { fakeOrders, type IOrder, EOrderStatus } from '@/pages/ManagerOrder/data';
 import type { TFilter } from '@/components/Table/typing';
 
-export default () => {
-  const [danhSach, setDanhSach] = useState<IOrder[]>(fakeOrders);
-  const [record, setRecord] = useState<IOrder>();
+export default function useManagerOrder() {
+  // Khởi tạo state với dữ liệu từ localStorage hoặc dữ liệu mẫu
+  const [danhSach, setDanhSach] = useState<IOrder[]>(() => {
+    const savedData = localStorage.getItem('managerOrderData');
+    return savedData ? JSON.parse(savedData) : fakeOrders;
+  });
+  
+  const [record, setRecord] = useState<IOrder | undefined>(undefined);
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
   const [loading, setLoading] = useState<boolean>(false);
   const [formSubmiting, setFormSubmiting] = useState<boolean>(false);
   const [filters, setFilters] = useState<TFilter<IOrder>[]>([]);
-  const [condition, setCondition] = useState<{ [k in keyof IOrder]?: any } | any>();
   const [sort, setSort] = useState<{ [k in keyof IOrder]?: 1 | -1 } | undefined>({ orderDate: -1 });
   const [edit, setEdit] = useState<boolean>(false);
-  const [isView, setIsView] = useState<boolean>(true);
   const [visibleForm, setVisibleForm] = useState<boolean>(false);
-  const [total, setTotal] = useState<number>(fakeOrders.length);
-  const [selectedIds, setSelectedIds] = useState<string[]>();
-  const initFilter: TFilter<IOrder>[] = [];
+  const [total, setTotal] = useState<number>(0);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Lưu dữ liệu vào localStorage mỗi khi danhSach thay đổi
+  useEffect(() => {
+    localStorage.setItem('managerOrderData', JSON.stringify(danhSach));
+  }, [danhSach]);
 
   // Lấy danh sách đơn hàng với bộ lọc, sắp xếp và phân trang
   const getModel = async () => {
     setLoading(true);
     try {
+      // Lấy dữ liệu từ localStorage hoặc sử dụng fakeOrders nếu không có
+      const savedData = localStorage.getItem('managerOrderData');
+      const sourceData = savedData ? JSON.parse(savedData) : fakeOrders;
+      
       // Áp dụng bộ lọc
-      let filteredData = [...fakeOrders];
+      let filteredData = [...sourceData];
       
       if (filters && filters.length > 0) {
         filteredData = filteredData.filter(order => {
@@ -86,47 +97,133 @@ export default () => {
     }
   };
 
-  // Xóa một đơn hàng
-  const deleteModel = async (id: string) => {
-    setLoading(true);
-    try {
-      const newData = fakeOrders.filter(item => item._id !== id);
-      setDanhSach(newData);
-      return true;
-    } catch (error) {
-      return Promise.reject(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Xóa nhiều đơn hàng
-  const deleteManyModel = async (ids: string[]) => {
-    setLoading(true);
-    try {
-      const newData = fakeOrders.filter(item => !ids.includes(item._id));
-      setDanhSach(newData);
-      return true;
-    } catch (error) {
-      return Promise.reject(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Mở form chỉnh sửa đơn hàng
-  const handleEdit = (record: IOrder) => {
-    setRecord(record);
-    setEdit(true);
-    setVisibleForm(true);
-  };
-
-  // Mở form tạo đơn hàng mới
-  const handleCreate = () => {
+  // Xử lý thêm mới
+  const handleCreate = useCallback(() => {
     setRecord(undefined);
     setEdit(false);
     setVisibleForm(true);
-  };
+  }, []);
+
+  // Xử lý chỉnh sửa
+  const handleEdit = useCallback((record: IOrder) => {
+    setRecord(record);
+    setEdit(true);
+    setVisibleForm(true);
+  }, []);
+
+  // Xử lý xóa
+  const deleteModel = useCallback(
+    (id: string) => {
+      // Lấy dữ liệu hiện tại từ localStorage
+      const savedData = localStorage.getItem('managerOrderData');
+      const currentData = savedData ? JSON.parse(savedData) : fakeOrders;
+      
+      // Xóa đơn hàng
+      const newData = currentData.filter((item: IOrder) => item._id !== id);
+      
+      // Cập nhật localStorage và state
+      localStorage.setItem('managerOrderData', JSON.stringify(newData));
+      
+      // Cập nhật state hiện tại
+      setDanhSach(prev => prev.filter(item => item._id !== id));
+    },
+    []
+  );
+
+  // Xử lý xóa nhiều
+  const deleteMany = useCallback(
+    (ids: string[]) => {
+      // Lấy dữ liệu hiện tại từ localStorage
+      const savedData = localStorage.getItem('managerOrderData');
+      const currentData = savedData ? JSON.parse(savedData) : fakeOrders;
+      
+      // Xóa các đơn hàng
+      const newData = currentData.filter((item: IOrder) => !ids.includes(item._id));
+      
+      // Cập nhật localStorage và state
+      localStorage.setItem('managerOrderData', JSON.stringify(newData));
+      
+      // Cập nhật state hiện tại
+      setDanhSach(prev => prev.filter(item => !ids.includes(item._id)));
+    },
+    []
+  );
+
+  // Xử lý thêm mới đơn hàng
+  const addOrder = useCallback(
+    (order: IOrder) => {
+      // Lấy dữ liệu hiện tại từ localStorage
+      const savedData = localStorage.getItem('managerOrderData');
+      const currentData = savedData ? JSON.parse(savedData) : fakeOrders;
+      
+      // Thêm đơn hàng mới
+      const newData = [order, ...currentData];
+      
+      // Cập nhật localStorage
+      localStorage.setItem('managerOrderData', JSON.stringify(newData));
+      
+      // Cập nhật state
+      setDanhSach(prev => [order, ...prev]);
+    },
+    []
+  );
+
+  // Xử lý cập nhật đơn hàng
+  const updateOrder = useCallback(
+    (updatedOrder: IOrder) => {
+      // Lấy dữ liệu hiện tại từ localStorage
+      const savedData = localStorage.getItem('managerOrderData');
+      const currentData = savedData ? JSON.parse(savedData) : fakeOrders;
+      
+      // Cập nhật đơn hàng
+      const updatedData = currentData.map((item: IOrder) => 
+        item._id === updatedOrder._id ? updatedOrder : item
+      );
+      
+      // Cập nhật localStorage
+      localStorage.setItem('managerOrderData', JSON.stringify(updatedData));
+      
+      // Cập nhật state
+      setDanhSach(prev => prev.map(item => 
+        item._id === updatedOrder._id ? updatedOrder : item
+      ));
+    },
+    []
+  );
+
+  // Xử lý hủy đơn hàng
+  const cancelOrder = useCallback(
+    (orderId: string) => {
+      // Lấy dữ liệu hiện tại từ localStorage
+      const savedData = localStorage.getItem('managerOrderData');
+      const currentData = savedData ? JSON.parse(savedData) : fakeOrders;
+      
+      // Tìm đơn hàng cần hủy
+      const orderToCancel = currentData.find((order: IOrder) => order._id === orderId);
+      
+      if (orderToCancel) {
+        // Cập nhật trạng thái đơn hàng
+        const updatedOrder = {
+          ...orderToCancel,
+          status: EOrderStatus.CANCELLED
+        };
+        
+        // Cập nhật danh sách đơn hàng
+        const updatedData = currentData.map((order: IOrder) => 
+          order._id === orderId ? updatedOrder : order
+        );
+        
+        // Cập nhật localStorage
+        localStorage.setItem('managerOrderData', JSON.stringify(updatedData));
+        
+        // Cập nhật state
+        setDanhSach(prev => prev.map(order => 
+          order._id === orderId ? {...order, status: EOrderStatus.CANCELLED} : order
+        ));
+      }
+    },
+    []
+  );
 
   return {
     danhSach,
@@ -138,30 +235,26 @@ export default () => {
     limit,
     setLimit,
     loading,
-    setLoading,
-    formSubmiting,
-    setFormSubmiting,
     filters,
     setFilters,
-    condition,
-    setCondition,
     sort,
     setSort,
     edit,
     setEdit,
-    isView,
-    setIsView,
     visibleForm,
     setVisibleForm,
     total,
-    setTotal,
     selectedIds,
     setSelectedIds,
-    initFilter,
+    formSubmiting,
+    setFormSubmiting,
     getModel,
     deleteModel,
-    deleteManyModel,
+    deleteMany,
     handleEdit,
     handleCreate,
+    addOrder,
+    updateOrder,
+    cancelOrder
   };
-}; 
+} 

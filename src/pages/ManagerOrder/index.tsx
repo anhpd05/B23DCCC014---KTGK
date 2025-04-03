@@ -9,7 +9,7 @@ import type { IColumn } from '@/components/Table/typing';
 import Form from './components/Form';
 
 const ManagerOrder = () => {
-  const { handleEdit, deleteModel, visibleForm, setVisibleForm, record, danhSach, setDanhSach } = useModel('managerorder.managerorder');
+  const { handleEdit, deleteModel, visibleForm, setVisibleForm, record, danhSach, setDanhSach, cancelOrder } = useModel('managerorder.managerorder');
 
   // Hàm xử lý hủy đơn hàng
   const handleCancelOrder = (orderId: string) => {
@@ -31,18 +31,8 @@ const ManagerOrder = () => {
         cancelText: 'Không',
         okButtonProps: { danger: true },
         onOk: () => {
-          // Cập nhật trạng thái đơn hàng thành "Hủy"
-          const updatedOrder = {
-            ...orderToCancel,
-            status: EOrderStatus.CANCELLED
-          };
-          
-          // Cập nhật danh sách đơn hàng
-          const updatedList = danhSach.map(order => 
-            order._id === orderId ? updatedOrder : order
-          );
-          
-          setDanhSach(updatedList);
+          // Sử dụng hàm cancelOrder từ model
+          cancelOrder(orderId);
           message.success('Đơn hàng đã được hủy thành công');
         }
       });
@@ -154,8 +144,8 @@ const ManagerOrder = () => {
           modelName="managerorder.managerorder"
           columns={columns}
           title="Danh sách đơn hàng"
-        //   rowSelection
-        //   deleteMany
+          rowSelection
+          deleteMany
           buttons={{
             reload: true,
             filter: true,
