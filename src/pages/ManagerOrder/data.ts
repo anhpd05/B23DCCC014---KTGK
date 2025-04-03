@@ -1,6 +1,3 @@
-import { faker } from '@faker-js/faker';
-import { fakeProducts } from './productData';
-
 export enum EOrderStatus {
   PENDING = 'Chờ xác nhận',
   SHIPPING = 'Đang giao',
@@ -39,13 +36,13 @@ export const fakeOrders: IOrder[] = [
       {
         productId: 'p1',
         quantity: 1,
-        price: 28990000, // Giá từ productData.ts
+        price: 28990000, 
         subtotal: 28990000
       },
       {
         productId: 'p3',
         quantity: 2,
-        price: 4990000, // Giá từ productData.ts
+        price: 4990000, 
         subtotal: 9980000
       }
     ],
@@ -64,13 +61,13 @@ export const fakeOrders: IOrder[] = [
       {
         productId: 'p2',
         quantity: 1,
-        price: 25990000, // Giá từ productData.ts
+        price: 25990000, 
         subtotal: 25990000
       },
       {
         productId: 'p5',
         quantity: 1,
-        price: 19990000, // Giá từ productData.ts
+        price: 19990000, 
         subtotal: 19990000
       }
     ],
@@ -89,7 +86,7 @@ export const fakeOrders: IOrder[] = [
       {
         productId: 'p4',
         quantity: 1,
-        price: 9990000, // Giá từ productData.ts
+        price: 9990000, 
         subtotal: 9990000
       }
     ],
@@ -108,19 +105,19 @@ export const fakeOrders: IOrder[] = [
       {
         productId: 'p6',
         quantity: 3,
-        price: 590000, // Giá từ productData.ts
+        price: 590000, 
         subtotal: 1770000
       },
       {
         productId: 'p7',
         quantity: 2,
-        price: 490000, // Giá từ productData.ts
+        price: 490000, 
         subtotal: 980000
       },
       {
         productId: 'p8',
         quantity: 4,
-        price: 790000, // Giá từ productData.ts
+        price: 790000, 
         subtotal: 3160000
       }
     ],
@@ -139,7 +136,7 @@ export const fakeOrders: IOrder[] = [
       {
         productId: 'p5',
         quantity: 1,
-        price: 19990000, // Giá từ productData.ts
+        price: 19990000, 
         subtotal: 19990000
       }
     ],
@@ -158,13 +155,13 @@ export const fakeOrders: IOrder[] = [
       {
         productId: 'p3',
         quantity: 2,
-        price: 4990000, // Giá từ productData.ts
+        price: 4990000,
         subtotal: 9980000
       },
       {
         productId: 'p8',
         quantity: 3,
-        price: 790000, // Giá từ productData.ts
+        price: 790000, 
         subtotal: 2370000
       }
     ],
@@ -183,13 +180,13 @@ export const fakeOrders: IOrder[] = [
       {
         productId: 'p2',
         quantity: 1,
-        price: 25990000, // Giá từ productData.ts
+        price: 25990000, 
         subtotal: 25990000
       },
       {
         productId: 'p4',
         quantity: 1,
-        price: 9990000, // Giá từ productData.ts
+        price: 9990000,
         subtotal: 9990000
       }
     ],
@@ -208,7 +205,7 @@ export const fakeOrders: IOrder[] = [
       {
         productId: 'p7',
         quantity: 2,
-        price: 490000, // Giá từ productData.ts
+        price: 490000,
         subtotal: 980000
       }
     ],
