@@ -30,11 +30,18 @@
 		component: './TienIch/GioiThieu',
 		hideInMenu: true,
 	},
+	// {
+	// 	path: '/random-user',
+	// 	name: 'RandomUser',
+	// 	component: './RandomUser',
+	// 	icon: 'ArrowsAltOutlined',
+	// },
+
 	{
-		path: '/random-user',
-		name: 'RandomUser',
-		component: './RandomUser',
-		icon: 'ArrowsAltOutlined',
+		path: '/manager-order',
+		name: 'ManagerOrder',
+		component: './ManagerOrder',
+		icon: 'ShoppingCartOutlined',
 	},
 
 	// DANH MUC HE THONG
