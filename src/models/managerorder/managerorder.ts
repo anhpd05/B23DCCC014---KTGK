@@ -3,11 +3,14 @@ import { fakeOrders, type IOrder, EOrderStatus } from '@/pages/ManagerOrder/data
 import type { TFilter } from '@/components/Table/typing';
 
 export default function useManagerOrder() {
-  // Khởi tạo state với dữ liệu từ localStorage hoặc dữ liệu mẫu
-  const [danhSach, setDanhSach] = useState<IOrder[]>(() => {
+  // Lưu trữ toàn bộ dữ liệu gốc
+  const [allOrders, setAllOrders] = useState<IOrder[]>(() => {
     const savedData = localStorage.getItem('managerOrderData');
     return savedData ? JSON.parse(savedData) : fakeOrders;
   });
+  
+  // Dữ liệu hiển thị sau khi lọc và phân trang
+  const [danhSach, setDanhSach] = useState<IOrder[]>([]);
   
   const [record, setRecord] = useState<IOrder | undefined>(undefined);
   const [page, setPage] = useState<number>(1);
@@ -21,21 +24,17 @@ export default function useManagerOrder() {
   const [total, setTotal] = useState<number>(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  // Lưu dữ liệu vào localStorage mỗi khi danhSach thay đổi
+  // Lưu dữ liệu vào localStorage mỗi khi allOrders thay đổi
   useEffect(() => {
-    localStorage.setItem('managerOrderData', JSON.stringify(danhSach));
-  }, [danhSach]);
+    localStorage.setItem('managerOrderData', JSON.stringify(allOrders));
+  }, [allOrders]);
 
   // Lấy danh sách đơn hàng với bộ lọc, sắp xếp và phân trang
   const getModel = async () => {
     setLoading(true);
     try {
-      // Lấy dữ liệu từ localStorage hoặc sử dụng fakeOrders nếu không có
-      const savedData = localStorage.getItem('managerOrderData');
-      const sourceData = savedData ? JSON.parse(savedData) : fakeOrders;
-      
-      // Áp dụng bộ lọc
-      let filteredData = [...sourceData];
+      // Sử dụng dữ liệu từ allOrders
+      let filteredData = [...allOrders];
       
       if (filters && filters.length > 0) {
         filteredData = filteredData.filter(order => {
@@ -87,6 +86,7 @@ export default function useManagerOrder() {
       const startIndex = (page - 1) * limit;
       const paginatedData = filteredData.slice(startIndex, startIndex + limit);
       
+      // Chỉ cập nhật danhSach, không ảnh hưởng đến allOrders
       setDanhSach(paginatedData);
       return paginatedData;
     } catch (error) {
@@ -114,79 +114,64 @@ export default function useManagerOrder() {
   // Xử lý xóa
   const deleteModel = useCallback(
     (id: string) => {
-      // Lấy dữ liệu hiện tại từ localStorage
-      const savedData = localStorage.getItem('managerOrderData');
-      const currentData = savedData ? JSON.parse(savedData) : fakeOrders;
+      // Cập nhật allOrders
+      const newData = allOrders.filter((item: IOrder) => item._id !== id);
+      setAllOrders(newData);
       
-      // Xóa đơn hàng
-      const newData = currentData.filter((item: IOrder) => item._id !== id);
-      
-      // Cập nhật localStorage và state
-      localStorage.setItem('managerOrderData', JSON.stringify(newData));
-      
-      // Cập nhật state hiện tại
+      // Cập nhật danhSach để UI cập nhật ngay lập tức
       setDanhSach(prev => prev.filter(item => item._id !== id));
     },
-    []
+    [allOrders]
   );
 
   // Xử lý xóa nhiều
   const deleteMany = useCallback(
     (ids: string[]) => {
-      // Lấy dữ liệu hiện tại từ localStorage
-      const savedData = localStorage.getItem('managerOrderData');
-      const currentData = savedData ? JSON.parse(savedData) : fakeOrders;
+      // Cập nhật allOrders
+      const newData = allOrders.filter((item: IOrder) => !ids.includes(item._id));
+      setAllOrders(newData);
       
-      // Xóa các đơn hàng
-      const newData = currentData.filter((item: IOrder) => !ids.includes(item._id));
-      
-      // Cập nhật localStorage và state
-      localStorage.setItem('managerOrderData', JSON.stringify(newData));
-      
-      // Cập nhật state hiện tại
+      // Cập nhật danhSach để UI cập nhật ngay lập tức
       setDanhSach(prev => prev.filter(item => !ids.includes(item._id)));
     },
-    []
+    [allOrders]
   );
 
   // Xử lý thêm mới đơn hàng
   const addOrder = useCallback(
     (order: IOrder) => {
-      // Lấy dữ liệu hiện tại từ localStorage
-      const savedData = localStorage.getItem('managerOrderData');
-      const currentData = savedData ? JSON.parse(savedData) : fakeOrders;
+      // Cập nhật allOrders
+      setAllOrders(prev => [order, ...prev]);
       
-      // Thêm đơn hàng mới
-      const newData = [order, ...currentData];
+      // Cập nhật danhSach nếu đang ở trang đầu tiên
+      if (page === 1) {
+        setDanhSach(prev => {
+          const newList = [order, ...prev];
+          if (newList.length > limit) {
+            return newList.slice(0, limit);
+          }
+          return newList;
+        });
+      }
       
-      // Cập nhật localStorage
-      localStorage.setItem('managerOrderData', JSON.stringify(newData));
-      
-      // Cập nhật state
-      setDanhSach(prev => [order, ...prev]);
+      // Cập nhật tổng số bản ghi
+      setTotal(prev => prev + 1);
     },
-    []
+    [page, limit]
   );
 
   // Xử lý cập nhật đơn hàng
   const updateOrder = useCallback(
     (updatedOrder: IOrder) => {
-      // Lấy dữ liệu hiện tại từ localStorage
-      const savedData = localStorage.getItem('managerOrderData');
-      const currentData = savedData ? JSON.parse(savedData) : fakeOrders;
-      
-      // Cập nhật đơn hàng
-      const updatedData = currentData.map((item: IOrder) => 
-        item._id === updatedOrder._id ? updatedOrder : item
+      // Cập nhật allOrders
+      setAllOrders(prev => 
+        prev.map(item => item._id === updatedOrder._id ? updatedOrder : item)
       );
       
-      // Cập nhật localStorage
-      localStorage.setItem('managerOrderData', JSON.stringify(updatedData));
-      
-      // Cập nhật state
-      setDanhSach(prev => prev.map(item => 
-        item._id === updatedOrder._id ? updatedOrder : item
-      ));
+      // Cập nhật danhSach để UI cập nhật ngay lập tức
+      setDanhSach(prev => 
+        prev.map(item => item._id === updatedOrder._id ? updatedOrder : item)
+      );
     },
     []
   );
@@ -194,12 +179,8 @@ export default function useManagerOrder() {
   // Xử lý hủy đơn hàng
   const cancelOrder = useCallback(
     (orderId: string) => {
-      // Lấy dữ liệu hiện tại từ localStorage
-      const savedData = localStorage.getItem('managerOrderData');
-      const currentData = savedData ? JSON.parse(savedData) : fakeOrders;
-      
-      // Tìm đơn hàng cần hủy
-      const orderToCancel = currentData.find((order: IOrder) => order._id === orderId);
+      // Tìm đơn hàng cần hủy trong allOrders
+      const orderToCancel = allOrders.find((order: IOrder) => order._id === orderId);
       
       if (orderToCancel) {
         // Cập nhật trạng thái đơn hàng
@@ -208,26 +189,25 @@ export default function useManagerOrder() {
           status: EOrderStatus.CANCELLED
         };
         
-        // Cập nhật danh sách đơn hàng
-        const updatedData = currentData.map((order: IOrder) => 
-          order._id === orderId ? updatedOrder : order
+        // Cập nhật allOrders
+        setAllOrders(prev => 
+          prev.map(order => order._id === orderId ? updatedOrder : order)
         );
         
-        // Cập nhật localStorage
-        localStorage.setItem('managerOrderData', JSON.stringify(updatedData));
-        
-        // Cập nhật state
-        setDanhSach(prev => prev.map(order => 
-          order._id === orderId ? {...order, status: EOrderStatus.CANCELLED} : order
-        ));
+        // Cập nhật danhSach để UI cập nhật ngay lập tức
+        setDanhSach(prev => 
+          prev.map(order => order._id === orderId ? {...order, status: EOrderStatus.CANCELLED} : order)
+        );
       }
     },
-    []
+    [allOrders]
   );
 
   return {
     danhSach,
     setDanhSach,
+    allOrders,
+    setAllOrders,
     record,
     setRecord,
     page,
