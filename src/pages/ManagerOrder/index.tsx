@@ -31,7 +31,6 @@ const ManagerOrder = () => {
         cancelText: 'Không',
         okButtonProps: { danger: true },
         onOk: () => {
-          // Sử dụng hàm cancelOrder từ model
           cancelOrder(orderId);
           message.success('Đơn hàng đã được hủy thành công');
         }
